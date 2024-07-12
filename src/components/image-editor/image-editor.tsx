@@ -1,10 +1,10 @@
 "use client"
 import React, { useState, useRef, useEffect, ChangeEvent, useMemo, useCallback } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/card";
-import { Button } from "~/components/button";
-import { Input } from "~/components/input";
-import { Label } from "~/components/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/select";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 
 export const ImageEditor = () => {
     const [image, setImage] = useState<HTMLImageElement | null>(null);

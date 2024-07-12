@@ -1,19 +1,37 @@
 "use client"
-import React, { useState, useRef, useEffect, ChangeEvent, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, ChangeEvent, useCallback } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import diploma from './diploma.png'
+import localFont from 'next/font/local'
 
-export const ImageEditor = () => {
+const eoeFont = localFont({
+    src: [{ path: './OPTIEngraversOldEnglish.otf', weight: '400', style: 'normal' }],
+})
+
+
+
+export function ImageEditor() {
     const [image, setImage] = useState<HTMLImageElement | null>(null);
-    const [text, setText] = useState('');
+    const [text, setText] = useState('Panudet Thammawongsa');
     const [fontFamily, setFontFamily] = useState('Arial');
-    const [fontSize, setFontSize] = useState(30);
+    const [fontSize, setFontSize] = useState(42);
     const [fontColor, setFontColor] = useState('#000000');
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const [svgSize, setSvgSize] = useState({ width: 0, height: 0 });
+    const svgRef = useRef(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
+    const loadImage = (src: string) => {
+        const img = new Image();
+        img.onload = () => {
+            setImage(img);
+            setSvgSize({ width: img.width, height: img.height });
+        };
+        img.src = src;
+    }
 
     const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -22,69 +40,104 @@ export const ImageEditor = () => {
         const reader = new FileReader();
 
         reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-                setImage(img);
-            };
             const result = event.target?.result;
             if (typeof result !== "string") return
-            img.src = result ?? '';
+            loadImage(result);
+
         };
 
         reader.readAsDataURL(file);
     };
 
-    const drawImage = useCallback(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        if (!image) return;
+
+    // const drawImage = useCallback(() => {
+    //     const canvas = canvasRef.current;
+    //     if (!canvas) return;
+    //     const svg = svgRef.current;
+    //     if (!svg) return;
+    //     if (!image) return;
+    //     const ctx = canvas.getContext('2d');
+    //     if (!ctx) return;
+    //     // canvas.width = image.width;
+    //     // canvas.height = image.height;
+    //     canvas.width = svgSize.width;
+    //     canvas.height = svgSize.height;
+
+    //     ctx.drawImage(image, 0, 0);
+
+    //     // if (text) {
+    //     //     const centerX = canvas.width / 2;
+    //     //     const centerY = canvas.height / 2;
+    //     //     ctx.font = `${fontSize}px ${fontFamily}`;
+    //     //     ctx.fillStyle = fontColor;
+    //     //     ctx.textAlign = 'center';
+    //     //     ctx.textBaseline = 'middle';
+    //     //     ctx.fillText(text, centerX, centerY);
+    //     // }
+    //     // }, [fontColor, fontFamily, fontSize, image, text]);
+    // }, [image, svgSize.height, svgSize.width]);
+
+    // const applyGrayscale = () => {
+    //     const canvas = canvasRef.current;
+    //     if (!canvas) return;
+    //     const ctx = canvas.getContext('2d');
+    //     if (!ctx) return;
+    //     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    //     const data = imageData.data;
+
+    //     for (let i = 0; i < data.length; i += 4) {
+    //         const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+    //         data[i] = avg;     // Red
+    //         data[i + 1] = avg; // Green
+    //         data[i + 2] = avg; // Blue
+    //     }
+
+    //     ctx.putImageData(imageData, 0, 0);
+    // };
+
+    // const saveImage = () => {
+    //     const canvas = canvasRef.current;
+    //     if (!canvas) return;
+    //     const link = document.createElement('a');
+    //     link.download = 'edited_image.png';
+    //     link.href = canvas.toDataURL();
+    //     link.click();
+    // };
+    // 
+    const saveImage = async () => {
+        const svg = svgRef.current;
+        if (!svg) return;
+        let svgData = new XMLSerializer().serializeToString(svg);
+        const diplomaDataUrl = await getDataUrl(diploma.src)
+        svgData = svgData.replace(new RegExp('href="[^"]+"'), `href="${diplomaDataUrl}"`);
+        const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        canvas.width = image.width;
-        canvas.height = image.height;
-        ctx.drawImage(image, 0, 0);
+        const img = new Image();
 
-        if (text) {
-            ctx.font = `${fontSize}px ${fontFamily}`;
-            ctx.fillStyle = fontColor;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
-        }
-    }, [fontColor, fontFamily, fontSize, image, text]);
+        img.onload = () => {
+            canvas.width = svgSize.width;
+            canvas.height = svgSize.height;
+            ctx?.drawImage(img, 0, 0);
+            const link = document.createElement('a');
+            link.download = 'edited_image.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
 
-    const applyGrayscale = () => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-
-        for (let i = 0; i < data.length; i += 4) {
-            const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-            data[i] = avg;     // Red
-            data[i + 1] = avg; // Green
-            data[i + 2] = avg; // Blue
-        }
-
-        ctx.putImageData(imageData, 0, 0);
-    };
-
-    const saveImage = () => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const link = document.createElement('a');
-        link.download = 'edited_image.png';
-        link.href = canvas.toDataURL();
-        link.click();
+        img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
     };
 
     useEffect(() => {
-        if (!image) return
-        drawImage();
-    }, [drawImage, image]);
+        loadImage(diploma.src);
+    }, [])
 
+    // useEffect(() => {
+    //     if (!image) return
+    //     drawImage();
+    // }, [drawImage, image]);
+    // 
+
+    console.debug(eoeFont)
 
     return (
         <Card className="w-full max-w-3xl mx-auto">
@@ -92,16 +145,17 @@ export const ImageEditor = () => {
                 <CardTitle>Image Editor with Custom Text</CardTitle>
             </CardHeader>
             <CardContent>
+                {/* <img src={diploma.blurDataURL} alt="diploma" /> */}
                 <div className="space-y-4">
-                    <div>
+                    {/* <div>
                         <Label htmlFor="imageUpload">Upload Image</Label>
                         <Input id="imageUpload" type="file" accept="image/*" onChange={handleImageUpload} />
-                    </div>
+                    </div> */}
                     <div>
                         <Label htmlFor="textInput">Custom Text</Label>
                         <Input id="textInput" type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Enter text" />
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
+                    {/* <div className="grid grid-cols-3 gap-4">
                         <div>
                             <Label htmlFor="fontFamily">Font Family</Label>
                             <Select value={fontFamily} onValueChange={setFontFamily}>
@@ -124,16 +178,54 @@ export const ImageEditor = () => {
                             <Label htmlFor="fontColor">Font Color</Label>
                             <Input id="fontColor" type="color" value={fontColor} onChange={(e) => setFontColor(e.target.value)} />
                         </div>
-                    </div>
+                    </div> */}
                     <div className="flex space-x-2">
-                        <Button onClick={applyGrayscale} disabled={!image}>Apply Grayscale</Button>
+                        {/* <Button onClick={applyGrayscale} disabled={!image}>Apply Grayscale</Button> */}
                         <Button onClick={saveImage} disabled={!image}>Save Image</Button>
                     </div>
                 </div>
             </CardContent>
             <CardFooter>
-                <canvas ref={canvasRef} className="w-full border border-gray-300" />
+                <svg
+                    ref={svgRef}
+                    // width={svgSize.width}
+                    // height={svgSize.height}
+                    width="100%"
+                    height="auto"
+                    viewBox={`0 0 ${svgSize.width} ${svgSize.height}`}
+                    className="w-full border border-gray-300"
+                >
+                    {image ? <image href={image.src} width="100%" height="100%" /> : null}
+                    {text ? (
+                        <text
+                            x="50%"
+                            y="320"
+                            fontFamily={eoeFont.style.fontFamily}
+                            fontSize={fontSize}
+                            fill={fontColor}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                        >
+                            {text}
+                        </text>
+                    ) : null}
+                </svg>
             </CardFooter>
         </Card>
     );
 };
+
+function getDataUrl(src: string) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d')!;
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+        };
+        img.src = src;
+    });
+}

@@ -4,7 +4,7 @@ const ImageEditor = dynamic(() => import("~/components/image-editor").then(c => 
 
 export default function Home() {
   return (
-    <main>
+    <main className="p-4">
       <ImageEditor />
     </main>
   );

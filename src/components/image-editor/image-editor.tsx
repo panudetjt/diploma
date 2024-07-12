@@ -7,6 +7,7 @@ import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import diploma from './diploma.png'
 import localFont from 'next/font/local'
+import { Canvg } from 'canvg';
 
 const eoeFont = localFont({
     src: [{ path: './OPTIEngraversOldEnglish.otf', weight: '400', style: 'normal' }],
@@ -16,13 +17,12 @@ const eoeFont = localFont({
 
 export function ImageEditor() {
     const [image, setImage] = useState<HTMLImageElement | null>(null);
-    const [text, setText] = useState('Panudet Thammawongsa');
-    const [fontFamily, setFontFamily] = useState('Arial');
+    const [text, setText] = useState('Peter Parker');
+    const [text2, setText2] = useState('In Engineering Science');
     const [fontSize, setFontSize] = useState(42);
-    const [fontColor, setFontColor] = useState('#000000');
+    const [fontColor, setFontColor] = useState('#141538');
     const [svgSize, setSvgSize] = useState({ width: 0, height: 0 });
     const svgRef = useRef(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const loadImage = (src: string) => {
         const img = new Image();
@@ -33,21 +33,21 @@ export function ImageEditor() {
         img.src = src;
     }
 
-    const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files) return;
-        const file = files[0];
-        const reader = new FileReader();
+    // const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    //     const files = e.target.files;
+    //     if (!files) return;
+    //     const file = files[0];
+    //     const reader = new FileReader();
 
-        reader.onload = (event) => {
-            const result = event.target?.result;
-            if (typeof result !== "string") return
-            loadImage(result);
+    //     reader.onload = (event) => {
+    //         const result = event.target?.result;
+    //         if (typeof result !== "string") return
+    //         loadImage(result);
 
-        };
+    //     };
 
-        reader.readAsDataURL(file);
-    };
+    //     reader.readAsDataURL(file);
+    // };
 
 
     // const drawImage = useCallback(() => {
@@ -111,13 +111,17 @@ export function ImageEditor() {
         const diplomaDataUrl = await getDataUrl(diploma.src)
         svgData = svgData.replace(new RegExp('href="[^"]+"'), `href="${diplomaDataUrl}"`);
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d')!;
         const img = new Image();
 
-        img.onload = () => {
+
+        img.onload = async () => {
             canvas.width = svgSize.width;
             canvas.height = svgSize.height;
-            ctx?.drawImage(img, 0, 0);
+
+            const v = await Canvg.from(ctx, img.src);
+            await v.render()
+
             const link = document.createElement('a');
             link.download = 'edited_image.png';
             link.href = canvas.toDataURL('image/png');
@@ -131,18 +135,10 @@ export function ImageEditor() {
         loadImage(diploma.src);
     }, [])
 
-    // useEffect(() => {
-    //     if (!image) return
-    //     drawImage();
-    // }, [drawImage, image]);
-    // 
-
-    console.debug(eoeFont)
-
     return (
         <Card className="w-full max-w-3xl mx-auto">
             <CardHeader>
-                <CardTitle>Image Editor with Custom Text</CardTitle>
+                <CardTitle>I have Ph.D.</CardTitle>
             </CardHeader>
             <CardContent>
                 {/* <img src={diploma.blurDataURL} alt="diploma" /> */}
@@ -152,8 +148,10 @@ export function ImageEditor() {
                         <Input id="imageUpload" type="file" accept="image/*" onChange={handleImageUpload} />
                     </div> */}
                     <div>
-                        <Label htmlFor="textInput">Custom Text</Label>
-                        <Input id="textInput" type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Enter text" />
+                        <Label htmlFor="textInput1">Text 1</Label>
+                        <Input id="textInput1" type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Enter text 1" />
+                        <Label htmlFor="textInput2">Text 2</Label>
+                        <Input id="textInput2" type="text" value={text2} onChange={(e) => setText2(e.target.value)} placeholder="Enter text 2" />
                     </div>
                     {/* <div className="grid grid-cols-3 gap-4">
                         <div>
@@ -179,37 +177,51 @@ export function ImageEditor() {
                             <Input id="fontColor" type="color" value={fontColor} onChange={(e) => setFontColor(e.target.value)} />
                         </div>
                     </div> */}
-                    <div className="flex space-x-2">
-                        {/* <Button onClick={applyGrayscale} disabled={!image}>Apply Grayscale</Button> */}
-                        <Button onClick={saveImage} disabled={!image}>Save Image</Button>
-                    </div>
+                    <svg
+                        ref={svgRef}
+                        // width={svgSize.width}
+                        // height={svgSize.height}
+                        width="100%"
+                        viewBox={`0 0 ${svgSize.width} ${svgSize.height}`}
+                        className="w-full border border-gray-300"
+                    >
+                        {image ? <image href={image.src} width="100%" height="100%" /> : null}
+                        {text ? (
+                            <text
+                                x="50%"
+                                y="320"
+                                fontFamily={eoeFont.style.fontFamily}
+                                fontSize={fontSize}
+                                fill={fontColor}
+                                fontWeight="800"
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                            >
+                                {text}
+                            </text>
+                        ) : null}
+                        {text2 ? (
+                            <text
+                                x="50%"
+                                y="485"
+                                fontFamily={eoeFont.style.fontFamily}
+                                fontSize={30}
+                                fill={fontColor}
+                                textAnchor="middle"
+                                fontWeight="800"
+                                dominantBaseline="middle"
+                            >
+                                {text2}
+                            </text>
+                        ) : null}
+                    </svg>
                 </div>
             </CardContent>
-            <CardFooter>
-                <svg
-                    ref={svgRef}
-                    // width={svgSize.width}
-                    // height={svgSize.height}
-                    width="100%"
-                    height="auto"
-                    viewBox={`0 0 ${svgSize.width} ${svgSize.height}`}
-                    className="w-full border border-gray-300"
-                >
-                    {image ? <image href={image.src} width="100%" height="100%" /> : null}
-                    {text ? (
-                        <text
-                            x="50%"
-                            y="320"
-                            fontFamily={eoeFont.style.fontFamily}
-                            fontSize={fontSize}
-                            fill={fontColor}
-                            textAnchor="middle"
-                            dominantBaseline="middle"
-                        >
-                            {text}
-                        </text>
-                    ) : null}
-                </svg>
+            <CardFooter className="justify-center">
+                <div className="flex space-x-2">
+                    {/* <Button onClick={applyGrayscale} disabled={!image}>Apply Grayscale</Button> */}
+                    <Button onClick={saveImage} disabled={!image}>Save Image</Button>
+                </div>
             </CardFooter>
         </Card>
     );

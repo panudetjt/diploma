@@ -8,16 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import diploma from './diploma.png'
 import localFont from 'next/font/local'
 import { Canvg } from 'canvg';
+import { ModeToggle } from '../mode-toggle';
 
 const eoeFont = localFont({
     src: [{ path: './OPTIEngraversOldEnglish.otf', weight: '400', style: 'normal' }],
 })
 
-
-
 export function ImageEditor() {
     const [image, setImage] = useState<HTMLImageElement | null>(null);
-    const [text, setText] = useState('Peter Parker');
+    const [text, setText] = useState('Homelander');
     const [text2, setText2] = useState('In Engineering Science');
     const [fontSize, setFontSize] = useState(42);
     const [fontColor, setFontColor] = useState('#141538');
@@ -137,8 +136,9 @@ export function ImageEditor() {
 
     return (
         <Card className="w-full max-w-3xl mx-auto">
-            <CardHeader>
+            <CardHeader className="flex-row items-center justify-between">
                 <CardTitle>I have Ph.D.</CardTitle>
+                <ModeToggle />
             </CardHeader>
             <CardContent>
                 {/* <img src={diploma.blurDataURL} alt="diploma" /> */}
